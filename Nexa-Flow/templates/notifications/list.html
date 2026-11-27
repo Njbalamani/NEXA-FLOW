@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Notifications — NexaFlow{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">Signal feed</span><h1>Notifications</h1><p class="page-subtitle">Execution failures, assignments and system events.</p></div></div>
+<form method="post">
+  {% csrf_token %}
+  <div class="card">
+    <div class="card-head"><h2>Inbox</h2><button class="btn btn-ghost btn-sm" type="submit" name="read_all" value="1">Mark all read</button></div>
+    {% for notification in notifications %}
+      <div class="execution-row">
+        <div>
+          <strong>{{ notification.title }}</strong>
+          <div class="card-subtitle">{{ notification.body|truncatechars:140 }}</div>
+          <span class="badge {% if notification.is_read %}badge-success{% else %}badge-warning{% endif %}">{% if notification.is_read %}Read{% else %}Unread{% endif %}</span>
+          <span class="card-subtitle">{{ notification.created_at|date:"M d, H:i" }}</span>
+        </div>
+        <input type="checkbox" name="ids" value="{{ notification.pk }}" aria-label="Select notification">
+      </div>
+    {% empty %}<div class="empty-state"><strong>All clear</strong>No notifications yet.</div>{% endfor %}
+  </div>
+</form>
+{% endblock %}

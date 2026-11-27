@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}NexaFlow — Workflow automation with intelligence{% endblock %}
+{% block public_content %}
+<section class="hero">
+  <div>
+    <span class="eyebrow">Intelligent operations</span>
+    <h1>Automate the work that <span>moves your business.</span></h1>
+    <p>Design visual workflows, connect your tools, and let NexaFlow execute every step with retry logic, audit trails and AI-guided improvement.</p>
+    <div class="hero-actions">
+      <a class="btn btn-gold" href="{% url 'register' %}">Build your first workflow</a>
+      <a class="btn btn-ghost" href="{% url 'login' %}">Sign in to workspace</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <span class="flow-line"></span>
+    <div class="orbit-card one"><strong>Trigger</strong><small>Signed webhook · verified</small></div>
+    <div class="orbit-card two"><strong>Condition</strong><small>Amount ≥ 500 · routed</small></div>
+    <div class="orbit-card three"><strong>AI Assistant</strong><small>Optimizations suggested</small></div>
+  </div>
+</section>
+<section class="feature-grid">
+  <article class="card feature-card"><div class="feature-icon">01</div><h3>Visual builder</h3><p class="card-subtitle">Drag triggers, conditions and actions onto a live canvas. Every change is validated before execution.</p></article>
+  <article class="card feature-card"><div class="feature-icon">02</div><h3>Integrations</h3><p class="card-subtitle">Connect email, webhooks, Slack, Google services and REST APIs without exposing credentials to the browser.</p></article>
+  <article class="card feature-card"><div class="feature-icon">03</div><h3>Execution intelligence</h3><p class="card-subtitle">Track every step, retry failures, and get AI explanations backed by real execution history.</p></article>
+</section>
+{% endblock %}

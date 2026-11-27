@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ workflow.name }} — Builder{% endblock %}
+{% block head %}
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+{% endblock %}
+{% block content %}
+<div class="builder-head">
+  <div>
+    <span class="eyebrow">Visual workflow builder</span>
+    <h1>{{ workflow.name }}</h1>
+    <p class="page-subtitle"><span id="builder-version">Version {{ workflow.version }}</span> · Drag components, connect ports and save. Changes are validated before execution.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{% url 'workflow-list' %}">Back to list</a>
+  </div>
+</div>
+
+<div id="builder-root" data-workflow-id="{{ workflow.pk }}" data-definition='{{ definition_json }}'>
+  <div id="builder-app"></div>
+</div>
+
+<div class="card section-block">
+  <div class="card-head"><div><h2>3D workflow topology</h2><span class="card-subtitle">Spatial view of node placement</span></div><span class="badge badge-info">Three.js</span></div>
+  <div id="workflow3d" class="flow-3d" data-workflow-3d='{{ nodes_3d_json }}'></div>
+</div>
+
+<div class="split-grid section-block">
+  <div class="card">
+    <div class="card-head"><div><h2>Validation snapshot</h2><span class="card-subtitle">Server-side checks</span></div><span class="badge {% if validation.valid %}badge-success{% else %}badge-failed{% endif %}">{% if validation.valid %}Valid{% else %}Invalid{% endif %}</span></div>
+    <ul class="validation-list">
+      {% for error in validation.errors %}<li>{{ error }}</li>{% endfor %}
+      {% for warning in validation.warnings %}<li>{{ warning }}</li>{% endfor %}
+      {% if not validation.errors and not validation.warnings %}<li>No issues found.</li>{% endif %}
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-head"><div><h2>Recent executions</h2><span class="card-subtitle">This workflow</span></div><a href="{% url 'execution-list' %}" class="btn btn-ghost btn-sm">All</a></div>
+    {% for execution in recent_executions %}
+      <div class="execution-row"><a href="{% url 'execution-detail' execution.pk %}">#{{ execution.pk }} · {{ execution.trigger_type }}</a><span class="badge {% if execution.status == 'success' %}badge-success{% elif execution.status == 'failed' %}badge-failed{% else %}badge-warning{% endif %}">{{ execution.status }}</span></div>
+    {% empty %}<p class="card-subtitle">No executions recorded.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script type="text/babel" src="{% static 'js/builder.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load nexaflow_tags %}
+{% block title %}Billing — NexaFlow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Subscription</span><h1>Plans & billing</h1><p class="page-subtitle">Current plan: <strong>{{ subscription.plan|upper }}</strong> · {{ subscription.status }}</p></div>
+</div>
+
+<div class="card mb-2">
+  <div class="card-head"><div><h2>Usage this period</h2><span class="card-subtitle">Limits are enforced by the engine and APIs.</span></div><span class="badge badge-info">{{ subscription.current_period_end|date:"M d, Y"|default:"No end date" }}</span></div>
+  <div class="split-grid">
+    <div><div class="card-subtitle">Workflows · {{ usage.workflows }}/{{ limits.workflows }}</div><div class="usage-bar"><span style="width:{{ usage_percent.workflows }}%"></span></div></div>
+    <div><div class="card-subtitle">Executions · {{ usage.executions_this_month }}/{{ limits.executions_per_month }}</div><div class="usage-bar"><span style="width:{{ usage_percent.executions_per_month }}%"></span></div></div>
+    <div><div class="card-subtitle">Integrations · {{ usage.integrations }}/{{ limits.integrations }}</div><div class="usage-bar"><span style="width:{{ usage_percent.integrations }}%"></span></div></div>
+    <div><div class="card-subtitle">Seats · {{ usage.seats }}/{{ limits.seats }}</div><div class="usage-bar"><span style="width:{{ usage_percent.seats }}%"></span></div></div>
+  </div>
+</div>
+
+<div class="plan-grid">
+  {% for value,label in plans %}
+  <article class="card plan-card {% if value == 'pro' %}featured{% endif %}">
+    <h3>{{ label }}</h3>
+    <div class="plan-price">${{ prices|get_item:value }}<span> / month</span></div>
+    <p class="card-subtitle">{% if value == 'free' %}Essential automation for small teams.{% elif value == 'pro' %}Higher limits for growing operations.{% else %}Scale and governance for enterprises.{% endif %}</p>
+    <form method="post" class="mt-2">
+      {% csrf_token %}
+      <input type="hidden" name="plan" value="{{ value }}">
+      {% if value != 'free' %}<input class="form-control" name="card_number" placeholder="Card number" autocomplete="cc-number">{% endif %}
+      <button class="btn {% if value == 'pro' %}btn-gold{% else %}btn-ghost{% endif %} full-width mt-1" type="submit">{% if subscription.plan == value %}Current plan{% else %}Switch to {{ label }}{% endif %}</button>
+    </form>
+  </article>
+  {% endfor %}
+</div>
+
+<div class="card section-block">
+  <div class="card-head"><div><h2>Billing history</h2><span class="card-subtitle">Test gateway transactions only</span></div></div>
+  <div class="table-wrap">
+    <table><thead><tr><th>Reference</th><th>Description</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>
+      {% for payment in payments %}
+      <tr><td class="mono">{{ payment.provider_reference }}</td><td>{{ payment.description }}</td><td>${{ payment.amount }}</td><td><span class="badge {% if payment.status == 'succeeded' %}badge-success{% elif payment.status == 'failed' %}badge-failed{% else %}badge-warning{% endif %}">{{ payment.status }}</span></td><td>{{ payment.created_at|date:"M d, H:i" }}</td></tr>
+      {% empty %}<tr><td colspan="5" class="empty-state">No payments recorded.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+</div>
+{% endblock %}

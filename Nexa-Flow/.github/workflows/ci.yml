@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: nexaflow
+          POSTGRES_USER: nexaflow
+          POSTGRES_PASSWORD: nexaflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nexaflow -d nexaflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DEBUG: "false"
+      DJANGO_SECRET_KEY: ci-only-secret-key-not-for-production
+      NEXAFLOW_ENCRYPTION_KEY: ci-only-encryption-key-not-for-production
+      ALLOWED_HOSTS: testserver,localhost,127.0.0.1
+      DATABASE_URL: postgresql://nexaflow:nexaflow@localhost:5432/nexaflow
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CELERY_RESULT_BACKEND: redis://localhost:6379/1
+      CELERY_TASK_ALWAYS_EAGER: "true"
+      CACHE_URL: redis://localhost:6379/2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Django checks
+        run: |
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+      - name: Tests
+        run: python manage.py test -v 2

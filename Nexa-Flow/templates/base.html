@@ -1,0 +1,140 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}NexaFlow{% endblock %}</title>
+  <meta name="description" content="NexaFlow — AI-powered business workflow automation.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.min.js"></script>
+  <script defer src="{% static 'js/app.js' %}"></script>
+  {% block head %}{% endblock %}
+</head>
+<body class="{% if request.user.is_authenticated %}app-body{% else %}public-body{% endif %}">
+  {% if request.user.is_authenticated %}
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="{% url 'dashboard' %}">
+        <span class="brand-mark">N</span>
+        <span class="brand-name">Nexa<span>flow</span></span>
+      </a>
+
+      {% if active_organization %}
+      <div class="org-switcher glass-subtle">
+        <span class="org-avatar">{{ active_organization.name|slice:":1"|upper }}</span>
+        <div class="org-switcher-copy">
+          <span class="org-label">Workspace</span>
+          <strong>{{ active_organization.name|truncatechars:24 }}</strong>
+        </div>
+        <a class="icon-button" href="{% url 'organization-settings' %}" title="Organization settings" aria-label="Organization settings">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3v-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.4 7 7.2 4.2l.1.1a1.7 1.7 0 0 0 1.9.3H9.3a1.7 1.7 0 0 0 1-1.6V2.8h4v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.6 1h.2v4h-.2a1.7 1.7 0 0 0-1.6 1Z"/></svg>
+        </a>
+      </div>
+      {% endif %}
+
+      <nav class="nav" aria-label="Primary">
+        <p class="nav-heading">Command center</p>
+        <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span> Overview
+        </a>
+        <a href="{% url 'workflow-list' %}" class="nav-link {% if 'workflow' in request.resolver_match.url_name or 'execution' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 12h4a4 4 0 0 0 4-4V8M7 12h4a4 4 0 0 1 4 4v0"/></svg></span> Workflows
+        </a>
+        <a href="{% url 'task-list' %}" class="nav-link {% if 'task' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 2.5 2.5L16 9"/></svg></span> Tasks
+        </a>
+        <a href="{% url 'ai-assistant' %}" class="nav-link {% if request.resolver_match.url_name == 'ai-assistant' %}active{% endif %}">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.7 4.8L18.5 9.5l-4.8 1.7L12 16l-1.7-4.8L5.5 9.5l4.8-1.7L12 3Z"/><path d="m18 16 .8 2.2L21 19l-2.2.8L18 22l-.8-2.2L15 19l2.2-.8L18 16Z"/></svg></span> AI Assistant
+        </a>
+        <p class="nav-heading">Operations</p>
+        <a href="{% url 'integration-list' %}" class="nav-link {% if 'integration' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7V5a2 2 0 0 1 4 0v2M7 11H5a2 2 0 0 0 0 4h2M17 11h2a2 2 0 0 1 0 4h-2"/><rect x="7" y="7" width="10" height="10" rx="3"/><path d="M12 10v4"/></svg></span> Integrations
+        </a>
+        <a href="{% url 'notification-list' %}" class="nav-link {% if 'notification' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></span> Notifications
+        </a>
+        <a href="{% url 'billing' %}" class="nav-link {% if request.resolver_match.url_name == 'billing' %}active{% endif %}">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/></svg></span> Billing
+        </a>
+        <a href="{% url 'organization-settings' %}" class="nav-link {% if request.resolver_match.url_name == 'organization-settings' %}active{% endif %}">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V6l8-3 8 3v15"/><path d="M8 21v-5h8v5M8 9h.01M12 9h.01M16 9h.01M8 13h.01M12 13h.01M16 13h.01"/></svg></span> Organization
+        </a>
+      </nav>
+
+      <div class="sidebar-foot glass-subtle">
+        <span class="status-dot"></span>
+        <div class="sidebar-user">
+          <strong>{{ request.user.get_full_name|default:request.user.email }}</strong>
+          <small>{{ request.user.email }}</small>
+        </div>
+      </div>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <div class="main-column">
+      <header class="topbar">
+        <button class="menu-button" id="menuButton" aria-label="Toggle navigation" aria-expanded="false" aria-controls="sidebar">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <div class="topbar-context">
+          <span>Workspace</span>
+          <strong>{{ active_organization.name|default:"NexaFlow" }}</strong>
+        </div>
+        <div class="topbar-search">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <form method="get" action="{% url 'workflow-list' %}">
+            <input type="search" name="q" placeholder="Search workflows" aria-label="Search workflows">
+          </form>
+        </div>
+        <div class="topbar-actions">
+          <a class="btn btn-ghost btn-sm" href="{% url 'workflow-create' %}">+ New workflow</a>
+          <a class="avatar-button" href="{% url 'profile' %}" title="{{ request.user.get_full_name|default:request.user.email }}">
+            {{ request.user.email|slice:":1"|upper }}
+          </a>
+        </div>
+      </header>
+
+      <main class="content">
+        {% if messages %}
+          <div class="message-stack">
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  {% else %}
+  <header class="public-header">
+    <a class="brand" href="{% url 'landing' %}">
+      <span class="brand-mark">N</span>
+      <span class="brand-name">Nexa<span>flow</span></span>
+    </a>
+    <nav>
+      <a class="btn btn-ghost btn-sm" href="{% url 'login' %}">Sign in</a>
+      <a class="btn btn-gold btn-sm" href="{% url 'register' %}">Start free</a>
+    </nav>
+  </header>
+  <main class="public-main">
+    {% if messages %}
+      <div class="message-stack">
+        {% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}
+      </div>
+    {% endif %}
+    {% block public_content %}{% endblock %}
+  </main>
+  {% endif %}
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

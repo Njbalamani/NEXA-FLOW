@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}AI Assistant — NexaFlow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">AI workflow assistant</span><h1>Turn intent into automation</h1><p class="page-subtitle">Describe a process in plain language. Every generated graph is validated before it can be saved or executed.</p></div>
+</div>
+
+<div class="split-grid">
+  <div class="card">
+    <div class="card-head"><div><h2>Generate workflow</h2><span class="card-subtitle">Local analyzer with optional AI provider</span></div><span class="badge badge-info">✦ AI</span></div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="generate">
+      <div class="field"><label>Process description</label><textarea name="description" rows="5" placeholder="Every day at 9:00, if amount is greater than 500, send an email and create a task"></textarea></div>
+      <button class="btn btn-gold mt-1" type="submit">Suggest workflow</button>
+    </form>
+    {% if result and result.definition %}
+      <div class="ai-result section-block">
+        <div class="card-head"><h3>Suggestion</h3><span class="badge {% if result.validation.valid %}badge-success{% else %}badge-failed{% endif %}">{{ result.source }} · {{ result.confidence }}</span></div>
+        <p class="card-subtitle">{{ result.explanation }}</p>
+        <pre>{{ result_json }}</pre>
+        <form method="post" class="mt-1">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save">
+          <input type="hidden" name="definition_json" value='{{ result_json }}'>
+          <input type="hidden" name="description" value="{{ result.definition.description }}">
+          <button class="btn btn-ghost" type="submit" {% if not result.validation.valid %}disabled{% endif %}>Save as draft</button>
+        </form>
+      </div>
+    {% endif %}
+    {% if result and result.explanation and not result.definition %}
+      <div class="ai-result section-block"><p>{{ result.explanation }}</p></div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div><h2>Failure explainer</h2><span class="card-subtitle">Grounded in execution history</span></div></div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="explain">
+      <div class="field"><label>Failed execution</label><select name="execution_id">{% for execution in executions %}<option value="{{ execution.pk }}">#{{ execution.pk }} · {{ execution.workflow.name }}</option>{% empty %}<option disabled>No failed executions</option>{% endfor %}</select></div>
+      <button class="btn btn-ghost mt-1" type="submit">Explain failure</button>
+    </form>
+    <div class="card-head section-block"><h3>Automation opportunities</h3></div>
+    {% for item in recommendations %}
+      <div class="recommendation"><div><strong>{{ item.title }}</strong><div class="card-subtitle">{{ item.reason }}</div></div><span class="badge {% if item.impact == 'high' %}badge-warning{% else %}badge-info{% endif %}">{{ item.impact }}</span></div>
+    {% empty %}<p class="card-subtitle">No opportunities detected yet.</p>{% endfor %}
+  </div>
+</div>
+
+<div class="card section-block">
+  <div class="card-head"><div><h2>Workflow improvements</h2><span class="card-subtitle">Based on graph structure and real results</span></div></div>
+  {% for item in workflow_ideas %}
+    <div class="mb-2">
+      <strong>{{ item.workflow.name }}</strong>
+      {% for suggestion in item.suggestions %}<div class="suggestion-item">{{ suggestion }}</div>{% endfor %}
+    </div>
+  {% empty %}<p class="card-subtitle">Create a workflow to receive recommendations.</p>{% endfor %}
+</div>
+{% endblock %}

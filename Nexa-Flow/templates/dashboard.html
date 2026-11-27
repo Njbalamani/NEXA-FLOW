@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Overview — NexaFlow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <span class="eyebrow">Command center</span>
+    <h1>Good to see you, {{ request.user.get_full_name|default:request.user.email }}</h1>
+    <p class="page-subtitle">Live operational metrics for {{ organization.name }}.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{% url 'execution-list' %}">Execution history</a>
+    <a class="btn btn-gold" href="{% url 'workflow-create' %}">+ New workflow</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <article class="card kpi"><div class="kpi-label">Total workflows</div><div class="kpi-value">{{ total_workflows }}</div><div class="kpi-delta">{{ draft_workflows }} drafts</div></article>
+  <article class="card kpi"><div class="kpi-label">Active workflows</div><div class="kpi-value">{{ active_workflows }}</div><div class="kpi-delta good">Ready to automate</div></article>
+  <article class="card kpi"><div class="kpi-label">Completed executions</div><div class="kpi-value">{{ completed_executions }}</div><div class="kpi-delta">{{ running_executions }} in flight</div></article>
+  <article class="card kpi"><div class="kpi-label">Success rate</div><div class="kpi-value">{{ success_rate }}%</div><div class="kpi-delta {% if failed_executions %}bad{% else %}good{% endif %}">{{ failed_executions }} failed</div></article>
+</div>
+
+<div class="dashboard-grid">
+  <article class="card">
+    <div class="card-head"><div><h2>Execution activity</h2><span class="card-subtitle">Last 14 days</span></div><span class="badge badge-info">{{ completed_executions }} completed</span></div>
+    <div class="chart-wrap"><canvas data-chart="activity" data-chart-data='{{ chart_data }}'></canvas></div>
+  </article>
+  <article class="card">
+    <div class="card-head"><div><h2>Workflow mix</h2><span class="card-subtitle">By status</span></div></div>
+    <div class="chart-wrap"><canvas data-chart="status" data-chart-data='{{ workflow_status_data }}'></canvas></div>
+  </article>
+</div>
+
+<div class="split-grid">
+  <article class="card">
+    <div class="card-head"><div><h2>Recent activity</h2><span class="card-subtitle">Latest executions</span></div><a class="btn btn-ghost btn-sm" href="{% url 'execution-list' %}">View all</a></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Workflow</th><th>Status</th><th>Trigger</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for execution in recent_activity %}
+          <tr>
+            <td><a href="{% url 'execution-detail' execution.pk %}">{{ execution.workflow.name }}</a></td>
+            <td><span class="badge {% if execution.status == 'success' %}badge-success{% elif execution.status == 'failed' %}badge-failed{% else %}badge-warning{% endif %}">{{ execution.status }}</span></td>
+            <td>{{ execution.trigger_type }}</td>
+            <td class="card-subtitle">{{ execution.created_at|date:"M d, H:i" }}</td>
+          </tr>
+          {% empty %}<tr><td colspan="4" class="empty-state">No executions yet. Run a workflow to see activity here.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+  <article class="card">
+    <div class="card-head"><div><h2>Operational load</h2><span class="card-subtitle">Tasks and top workflows</span></div></div>
+    <div class="chart-wrap short"><canvas data-chart="status" data-chart-data='{{ task_status_data }}'></canvas></div>
+    <div class="mt-1">
+      {% for workflow in top_workflows %}
+        <div class="execution-row"><span>{{ workflow.name }}</span><span class="badge">{{ workflow.runs }} runs</span></div>
+      {% empty %}<p class="card-subtitle">No workflows yet.</p>{% endfor %}
+    </div>
+  </article>
+</div>
+
+<div class="card section-block">
+  <div class="card-head"><div><h2>Task radar</h2><span class="card-subtitle">{{ pending_tasks }} pending · {{ overdue_tasks }} overdue</span></div><a class="btn btn-ghost btn-sm" href="{% url 'task-list' %}">Manage tasks</a></div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: nexaflow
+      POSTGRES_USER: nexaflow
+      POSTGRES_PASSWORD: nexaflow
+    volumes:
+      - nexaflow_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexaflow -d nexaflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://nexaflow:nexaflow@db:5432/nexaflow
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CELERY_TASK_ALWAYS_EAGER: "false"
+      CACHE_URL: redis://redis:6379/2
+      ALLOWED_HOSTS: "*"
+      CSRF_TRUSTED_ORIGINS: http://localhost:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - nexaflow_static:/app/staticfiles
+      - nexaflow_media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_worker:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://nexaflow:nexaflow@db:5432/nexaflow
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CELERY_TASK_ALWAYS_EAGER: "false"
+      CACHE_URL: redis://redis:6379/2
+    command: celery -A nexaflow worker -l info --concurrency=4
+    volumes:
+      - nexaflow_media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_beat:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://nexaflow:nexaflow@db:5432/nexaflow
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CELERY_TASK_ALWAYS_EAGER: "false"
+      CACHE_URL: redis://redis:6379/2
+    command: celery -A nexaflow beat -l info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  nexaflow_postgres:
+  nexaflow_static:
+  nexaflow_media:

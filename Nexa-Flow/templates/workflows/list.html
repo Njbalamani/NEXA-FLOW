@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Workflows — NexaFlow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Automation library</span><h1>Workflows</h1><p class="page-subtitle">Build, validate and run your automations.</p></div>
+  <div class="page-actions">
+    <form method="get" class="filters">
+      <input type="search" name="q" value="{{ search }}" placeholder="Search workflows">
+      <select name="status"><option value="">All statuses</option>{% for value,label in status_choices %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <button class="btn btn-ghost" type="submit">Filter</button>
+    </form>
+    <form method="post" action="{% url 'workflow-create' %}">{% csrf_token %}<input type="hidden" name="name" value="Untitled workflow"><button class="btn btn-gold" type="submit">+ New workflow</button></form>
+  </div>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Workflow</th><th>Status</th><th>Nodes</th><th>Runs</th><th>Last executed</th><th>Updated</th><th></th></tr></thead>
+      <tbody>
+        {% for workflow in workflows %}
+        <tr>
+          <td><a href="{% url 'workflow-builder' workflow.pk %}"><strong>{{ workflow.name }}</strong></a><div class="card-subtitle truncate">{{ workflow.description }}</div></td>
+          <td><span class="badge {% if workflow.status == 'active' %}badge-success{% elif workflow.status == 'draft' %}badge-warning{% else %}badge-info{% endif %}">{{ workflow.status }}</span></td>
+          <td>{{ workflow.node_count }}</td>
+          <td>{{ workflow.execution_count }}</td>
+          <td class="card-subtitle">{{ workflow.last_executed_at|date:"M d, H:i"|default:"—" }}</td>
+          <td class="card-subtitle">{{ workflow.updated_at|date:"M d, H:i" }}</td>
+          <td>
+            <div class="table-actions">
+              <a class="btn btn-ghost btn-sm" href="{% url 'workflow-builder' workflow.pk %}">Edit</a>
+              <form method="post" action="{% url 'workflow-delete' workflow.pk %}" onsubmit="return confirm('Delete this workflow?');">
+                {% csrf_token %}<button class="btn btn-danger btn-sm" type="submit">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}<tr><td colspan="7" class="empty-state"><strong>No workflows found</strong>Create one to start automating.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Profile — NexaFlow{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">Account</span><h1>Your profile</h1><p class="page-subtitle">Manage your personal details.</p></div></div>
+<div class="card narrow-card">
+  <form method="post" class="form-grid">
+    {% csrf_token %}
+    <div class="field full"><label>Email</label><input value="{{ request.user.email }}" disabled></div>
+    <div class="field full"><label>Full name</label><input name="full_name" value="{{ request.user.full_name }}"></div>
+    <div class="field"><label>Phone</label><input name="phone" value="{{ request.user.phone }}"></div>
+    <div class="field"><label>Timezone</label><input name="timezone" value="{{ request.user.timezone }}"></div>
+    <div class="field full"><button class="btn btn-gold" type="submit">Save profile</button></div>
+  </form>
+</div>
+{% endblock %}

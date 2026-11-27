@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Organization — NexaFlow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Workspace governance</span><h1>{{ organization.name }}</h1><p class="page-subtitle">Manage teams, workspaces and role-based access.</p></div>
+</div>
+
+<div class="split-grid">
+  <div class="card">
+    <div class="card-head"><h2>Members</h2><span class="badge badge-info">{{ memberships|length }}</span></div>
+    {% if can_manage_members %}
+    <form method="post" class="form-grid mb-2">
+      {% csrf_token %}<input type="hidden" name="action" value="member">
+      <div class="field"><label>Email address of existing user</label><input name="email" type="email" required></div>
+      <div class="field"><label>Role</label><select name="role">{% for value,label in roles %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+      <div class="field full"><button class="btn btn-ghost" type="submit">Add member</button></div>
+    </form>
+    {% endif %}
+    {% for item in members %}
+      <div class="execution-row"><span>{{ item.user.get_full_name }} <span class="card-subtitle">{{ item.user.email }}</span></span><span class="badge badge-info">{{ item.role }}</span></div>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Workspaces</h2></div>
+    {% if can_manage_workspaces %}
+    <form method="post" class="form-grid mb-2">
+      {% csrf_token %}<input type="hidden" name="action" value="workspace">
+      <div class="field"><label>Name</label><input name="name" required></div>
+      <div class="field"><label>Description</label><input name="description"></div>
+      <div class="field full"><button class="btn btn-ghost" type="submit">Create workspace</button></div>
+    </form>
+    {% endif %}
+    {% for workspace in workspaces %}<div class="execution-row"><span>{{ workspace.name }}</span><span class="card-subtitle">{{ workspace.slug }}</span></div>{% endfor %}
+  </div>
+</div>
+
+<div class="card section-block">
+  <div class="card-head"><h2>Teams</h2></div>
+  {% for team in teams %}<div class="execution-row"><span>{{ team.name }}</span><span class="card-subtitle">{{ team.workspace.name|default:"Organization-wide" }}</span></div>{% empty %}<p class="card-subtitle">No teams created yet.</p>{% endfor %}
+</div>
+{% endblock %}

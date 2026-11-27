@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Executions — NexaFlow{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">Audit trail</span><h1>Execution history</h1><p class="page-subtitle">Every workflow run, with status and duration.</p></div></div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Workflow</th><th>Status</th><th>Trigger</th><th>Attempts</th><th>Duration</th><th>Created</th><th></th></tr></thead>
+      <tbody>
+        {% for execution in executions %}
+        <tr>
+          <td class="mono">#{{ execution.pk }}</td>
+          <td>{{ execution.workflow.name }}</td>
+          <td><span class="badge {% if execution.status == 'success' %}badge-success{% elif execution.status == 'failed' %}badge-failed{% else %}badge-warning{% endif %}">{{ execution.status }}</span></td>
+          <td>{{ execution.trigger_type }}</td>
+          <td>{{ execution.attempts }}</td>
+          <td>{{ execution.duration_ms }} ms</td>
+          <td class="card-subtitle">{{ execution.created_at|date:"M d, H:i" }}</td>
+          <td><a class="btn btn-ghost btn-sm" href="{% url 'execution-detail' execution.pk %}">Inspect</a></td>
+        </tr>
+        {% empty %}<tr><td colspan="8" class="empty-state">No executions recorded yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

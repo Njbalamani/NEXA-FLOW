@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Tasks — NexaFlow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Work management</span><h1>Tasks</h1><p class="page-subtitle">Assign work, track deadlines and keep history.</p></div>
+  <form method="get" class="filters">
+    <input type="search" name="q" value="{{ search }}" placeholder="Search tasks">
+    <select name="status"><option value="">All statuses</option>{% for value,label in status_choices %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    <button class="btn btn-ghost" type="submit">Filter</button>
+  </form>
+</div>
+
+<details class="card mb-2">
+  <summary>+ Create task</summary>
+  <form method="post" action="{% url 'task-create' %}" class="form-grid">
+    {% csrf_token %}
+    <div class="field full"><label>Title</label><input name="title" required></div>
+    <div class="field full"><label>Description</label><textarea name="description"></textarea></div>
+    <div class="field"><label>Assignee</label><select name="assignee"><option value="">Unassigned</option>{% for membership in members %}<option value="{{ membership.user_id }}">{{ membership.user.get_full_name }}</option>{% endfor %}</select></div>
+    <div class="field"><label>Priority</label><select name="priority">{% for value,label in priority_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+    <div class="field"><label>Due date</label><input type="datetime-local" name="due_at"></div>
+    <div class="field align-end"><button class="btn btn-gold" type="submit">Create task</button></div>
+  </form>
+</details>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Task</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Due</th><th>Source</th><th></th></tr></thead>
+      <tbody>
+        {% for task in tasks %}
+        <tr>
+          <td><strong>{{ task.title }}</strong><div class="card-subtitle truncate">{{ task.description }}</div></td>
+          <td>{{ task.assignee.get_full_name|default:"Unassigned" }}</td>
+          <td><span class="badge {% if task.priority == 'urgent' %}badge-failed{% elif task.priority == 'high' %}badge-warning{% else %}badge-info{% endif %}">{{ task.priority }}</span></td>
+          <td><span class="badge {% if task.status == 'completed' %}badge-success{% elif task.status == 'pending' %}badge-warning{% else %}badge-info{% endif %}">{{ task.status }}</span></td>
+          <td class="card-subtitle">{% if task.is_overdue %}<span class="text-danger">Overdue · {% endif %}{{ task.due_at|date:"M d, H:i"|default:"—" }}{% if task.is_overdue %}</span>{% endif %}</td>
+          <td>{{ task.workflow.name|default:"Manual" }}</td>
+          <td>
+            <form method="post" action="{% url 'task-status' task.pk %}" class="inline-form">
+              {% csrf_token %}
+              <select name="status">{% for value,label in status_choices %}<option value="{{ value }}" {% if task.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+              <button class="btn btn-ghost btn-sm" type="submit">Update</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}<tr><td colspan="7" class="empty-state"><strong>No tasks yet</strong>Create one or let a workflow generate tasks.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

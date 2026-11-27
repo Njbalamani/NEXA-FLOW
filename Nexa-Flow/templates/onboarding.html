@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Set up organization — NexaFlow{% endblock %}
+{% block content %}
+<div class="card narrow-card centered-card">
+  <span class="eyebrow">One last step</span>
+  <h1>Create your organization</h1>
+  <p class="page-subtitle">Workflows, tasks and integrations are scoped to an organization.</p>
+  <form method="post" class="mt-2">
+    {% csrf_token %}
+    <div class="field"><label>Organization name</label><input name="name" required placeholder="Acme Operations"></div>
+    <button class="btn btn-gold mt-2 full-width" type="submit">Create workspace</button>
+  </form>
+</div>
+{% endblock %}

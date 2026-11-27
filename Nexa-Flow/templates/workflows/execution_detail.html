@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Execution #{{ execution.pk }} — NexaFlow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <span class="eyebrow">Execution detail</span>
+    <h1>{{ execution.workflow.name }} <span class="mono">#{{ execution.pk }}</span></h1>
+    <p class="page-subtitle">Started {{ execution.started_at|date:"M d, H:i:s"|default:"—" }} · {{ execution.duration_ms }} ms · {{ execution.attempts }} attempt(s)</p>
+  </div>
+  <div class="page-actions">
+    {% if execution.status == 'queued' or execution.status == 'running' %}
+    <form method="post" action="{% url 'execution-cancel' execution.pk %}">{% csrf_token %}<button class="btn btn-ghost" type="submit">Cancel</button></form>
+    {% elif execution.status == 'failed' or execution.status == 'cancelled' or execution.status == 'timed_out' %}
+    <form method="post" action="{% url 'execution-retry' execution.pk %}">{% csrf_token %}<button class="btn btn-primary" type="submit">Retry</button></form>
+    {% endif %}
+    <a class="btn btn-ghost" href="{% url 'execution-list' %}">Back</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <article class="card kpi"><div class="kpi-label">Status</div><div class="kpi-value compact"><span class="badge {% if execution.status == 'success' %}badge-success{% elif execution.status == 'failed' %}badge-failed{% else %}badge-warning{% endif %}">{{ execution.status }}</span></div></article>
+  <article class="card kpi"><div class="kpi-label">Trigger</div><div class="kpi-value compact">{{ execution.trigger_type }}</div></article>
+  <article class="card kpi"><div class="kpi-label">Steps</div><div class="kpi-value">{{ execution.steps.count }}</div></article>
+  <article class="card kpi"><div class="kpi-label">Duration</div><div class="kpi-value compact">{{ execution.duration_ms }} ms</div></article>
+</div>
+
+{% if execution.error %}
+<div class="alert alert-error mb-2">
+  <strong>Failure reason</strong><p class="card-subtitle">{{ execution.error }}</p>
+</div>
+{% endif %}
+
+<div class="split-grid">
+  <div class="card">
+    <div class="card-head"><h2>Step timeline</h2></div>
+    {% for step in execution.steps.all %}
+      <div class="execution-row">
+        <div><strong>{{ step.node_name }}</strong><div class="card-subtitle">{{ step.node_type }} · attempt {{ step.attempt }}</div></div>
+        <span class="badge {% if step.status == 'success' %}badge-success{% elif step.status == 'failed' %}badge-failed{% else %}badge-warning{% endif %}">{{ step.status }}</span>
+      </div>
+      {% if step.error %}<p class="card-subtitle text-danger">{{ step.error }}</p>{% endif %}
+      {% if step.output %}<pre class="mono code-block">{{ step.output }}</pre>{% endif %}
+    {% empty %}<p class="card-subtitle">No steps recorded.</p>{% endfor %}
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Execution context</h2></div>
+    <pre class="mono code-block">{{ execution.context }}</pre>
+  </div>
+</div>
+{% endblock %}
